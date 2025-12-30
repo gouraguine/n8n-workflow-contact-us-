@@ -1,0 +1,324 @@
+{
+  "name": "app group",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Contact us",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name :"
+            },
+            {
+              "fieldLabel": "Email"
+            },
+            {
+              "fieldLabel": "Message"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -1888,
+        4192
+      ],
+      "id": "162072a0-ae3c-4c37-aca4-f35abcc1b295",
+      "name": "On form submission",
+      "webhookId": "8569c76b-3c6e-4378-a1eb-fce7fec4d8df"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User full name :  {{ $json.fullName }}\nUser email : {{ $json.email }}\nUser Message : {{ $json.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a helpful customer support assistant. Your task is to respond to customer inquiries in a professional, friendly, and helpful manner. Provide clear and concise answers to their questions."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -1168,
+        3936
+      ],
+      "id": "b85f0959-41ab-42b0-902c-dd55473c2b38",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1216,
+        4160
+      ],
+      "id": "1306eb2b-c70a-4815-bdef-c559a2892d23",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gmR8CVULmCDyoyJd",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1088,
+        4160
+      ],
+      "id": "c76de878-7e05-46c7-99d3-edf459d1bfc2",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "sendTo": "= {{ $('On form submission').item.json.Email }}",
+        "subject": "Re: Your message – Thank you for contacting us",
+        "message": "=Hello {{ $('On form submission').item.json['Full Name :'] }},  Thank you for contacting us.  Here is our response to your message:\n<br>\n{{ $json.output.state }}  If you have any further questions, feel free to reply to this email. \n<br>\nBest regards, "your name"  AI Support Assistant   "yourmail@gmail.com",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -752,
+        4048
+      ],
+      "id": "89392cb2-44cd-4f8f-a3b5-cf13655e1f91",
+      "name": "Send a message",
+      "webhookId": "594c2163-274a-424f-8df4-26d153d9faa5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2mnIk53zcwpmApKV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7830fe40-2dd6-43d2-b1f4-62e3b062d5fb",
+              "name": "fullName",
+              "value": "={{ $json['Full Name :'] }}",
+              "type": "string"
+            },
+            {
+              "id": "3537774c-3ede-4fde-9712-dc82096edce3",
+              "name": "email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "b65eb4a9-0094-4f3a-8417-5fd5d3990399",
+              "name": "message",
+              "value": "={{ $json.Message }}",
+              "type": "string"
+            },
+            {
+              "id": "1261e8f4-6c42-4de9-9aea-cfcaa3904625",
+              "name": "adminemail",
+              "value": "yourmail@gmail.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1664,
+        4192
+      ],
+      "id": "fe4edf0d-8eca-4cd6-88b4-00ad69de3d76",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "da26f53b-081d-4673-a1e0-814ae7f7c703",
+              "leftValue": "={{ $json.message }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1440,
+        4192
+      ],
+      "id": "8dc29d49-fb1a-478f-947a-427636bef8ac",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "Yourmail@gmail.com",
+        "subject": "Empty form submission detected",
+        "message": "=An empty message was submitted via the form.  User name: {{ $('On form submission').item.json['Full Name :'] }} User email: {{ $('On form submission').item.json.Email }} Time: {{ $now }}  No AI response was generated.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -1104,
+        4336
+      ],
+      "id": "1c3f0d38-8c97-4e00-9ae5-a812cdcfcca1",
+      "name": "Send a message1",
+      "webhookId": "0870a40b-7a9c-426a-a549-d581f21bfb8a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2mnIk53zcwpmApKV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"state\": {\n      \"type\": \"string\"\n    },\n    \"cities\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -960,
+        4160
+      ],
+      "id": "343aa9bc-c0b9-4356-9a81-2f6c3a31dd87",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "31a3988b-b77f-4287-9e2f-2995f8f63fc6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0c29830691eac2a58af2dd48d0c7d173f27c6dd31a5bbcdcb901c6528eb78ead"
+  },
+  "id": "jKLv7cmWHMe3Ppf8",
+  "tags": []
+}
